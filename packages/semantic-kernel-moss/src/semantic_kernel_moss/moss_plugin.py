@@ -13,7 +13,7 @@ import logging
 from collections.abc import Sequence
 from typing import Annotated, Any
 
-from inferedge_moss import MossClient, QueryOptions
+from moss import MossClient, QueryOptions
 from semantic_kernel.functions import kernel_function
 
 __all__ = ["MossPlugin"]

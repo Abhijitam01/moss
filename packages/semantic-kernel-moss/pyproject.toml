@@ -5,7 +5,7 @@ description = "Moss semantic search plugin for Semantic Kernel"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "inferedge-moss>=1.0.0b18",
+    "moss>=1.0.0b18",
     "semantic-kernel>=1.0.0",
 ]
 
