@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from semantic_kernel_moss import MossPlugin
+from moss_semantic_kernel import MossPlugin
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -32,7 +32,7 @@ def _make_mock_doc(text="sample text", score=0.95, doc_id="doc-1", metadata=None
 
 
 # ---------------------------------------------------------------------------
-# MossPlugin – init tests
+# MossPlugin -- init tests
 # ---------------------------------------------------------------------------
 
 
@@ -61,7 +61,7 @@ class TestMossPluginInit:
 
 
 # ---------------------------------------------------------------------------
-# MossPlugin – load_index tests
+# MossPlugin -- load_index tests
 # ---------------------------------------------------------------------------
 
 
@@ -88,7 +88,7 @@ class TestMossPluginLoadIndex:
 
 
 # ---------------------------------------------------------------------------
-# MossPlugin – search tests
+# MossPlugin -- search tests
 # ---------------------------------------------------------------------------
 
 
@@ -205,14 +205,16 @@ class TestKernelIntegration:
         with patch.object(
             plugin._client, "query", new_callable=AsyncMock, return_value=mock_result
         ):
-            result = await kernel.invoke(function_name="search", plugin_name="moss", query="test")
+            result = await kernel.invoke(
+                function_name="search", plugin_name="moss", query="test"
+            )
             output = str(result)
             assert "kernel result" in output
             assert "score=0.920" in output
 
 
 # ---------------------------------------------------------------------------
-# Format results – edge cases
+# Format results -- edge cases
 # ---------------------------------------------------------------------------
 
 

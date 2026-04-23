@@ -18,7 +18,7 @@ from semantic_kernel.functions import kernel_function
 
 __all__ = ["MossPlugin"]
 
-logger = logging.getLogger("semantic_kernel_moss")
+logger = logging.getLogger("moss_semantic_kernel")
 
 
 class MossPlugin:
@@ -31,7 +31,7 @@ class MossPlugin:
     Usage::
 
         import semantic_kernel as sk
-        from semantic_kernel_moss import MossPlugin
+        from moss_semantic_kernel import MossPlugin
 
         moss = MossPlugin(
             project_id="...",
