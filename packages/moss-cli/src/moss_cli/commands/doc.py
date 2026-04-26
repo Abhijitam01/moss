@@ -32,13 +32,14 @@ def add(
     index_name: str = typer.Argument(..., help="Index name"),
     file: str = typer.Option(..., "--file", "-f", help="Path to JSON/CSV document file, or '-' for stdin"),
     upsert: bool = typer.Option(False, "--upsert", "-u", help="Update existing documents"),
+    auto_id: bool = typer.Option(False, "--auto-id", help="Auto-generate UUID4 document IDs"),
     wait: bool = typer.Option(False, "--wait", "-w", help="Wait for job to complete"),
     poll_interval: float = typer.Option(2.0, "--poll-interval", help="Seconds between status checks"),
 ) -> None:
     """Add documents to an index."""
     json_mode = ctx.obj.get("json_output", False)
     client = _client(ctx)
-    docs = load_documents(file)
+    docs = load_documents(file, auto_id=auto_id)
 
     options = MutationOptions(upsert=True) if upsert else None
 

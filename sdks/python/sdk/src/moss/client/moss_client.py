@@ -25,6 +25,19 @@ from moss_core import (
 logger = logging.getLogger(__name__)
 
 
+def _apply_auto_ids(docs: List[DocumentInfo]) -> List[DocumentInfo]:
+    """Return a new list of documents with each id replaced by a fresh UUID4."""
+    return [
+        DocumentInfo(
+            id=str(uuid.uuid4()),
+            text=doc.text,
+            metadata=doc.metadata,
+            embedding=doc.embedding,
+        )
+        for doc in docs
+    ]
+
+
 def _get_manage_url() -> str:
     """Manage URL, overridable via env for local development."""
     return os.getenv("MOSS_CLOUD_API_MANAGE_URL", CLOUD_API_MANAGE_URL)
@@ -81,13 +94,19 @@ class MossClient:
         name: str,
         docs: List[DocumentInfo],
         model_id: Optional[str] = None,
+        auto_id: bool = False,
     ) -> MutationResult:
-        """Create a new index and populate it with documents."""
-        resolved_model_id = self._resolve_model_id(docs, model_id)
+        """Create a new index and populate it with documents.
+
+        Args:
+            auto_id: When True, replaces all document IDs with fresh UUIDs.
+        """
+        resolved_docs = _apply_auto_ids(docs) if auto_id else docs
+        resolved_model_id = self._resolve_model_id(resolved_docs, model_id)
         return await asyncio.to_thread(
             self._manage.create_index,
             name,
-            docs,
+            resolved_docs,
             resolved_model_id,
         )
 
@@ -96,12 +115,18 @@ class MossClient:
         name: str,
         docs: List[DocumentInfo],
         options: Optional[MutationOptions] = None,
+        auto_id: bool = False,
     ) -> MutationResult:
-        """Add or update documents in an index."""
+        """Add or update documents in an index.
+
+        Args:
+            auto_id: When True, replaces all document IDs with fresh UUIDs.
+        """
+        resolved_docs = _apply_auto_ids(docs) if auto_id else docs
         return await asyncio.to_thread(
             self._manage.add_docs,
             name,
-            docs,
+            resolved_docs,
             options,
         )
 

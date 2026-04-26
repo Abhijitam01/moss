@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from moss import MossClient
+from moss.client.moss_client import _apply_auto_ids
 
 
 @pytest.fixture
@@ -566,3 +568,113 @@ class TestQueryCloudFallback:
 
         assert result == mock_result
         client._manager.query.assert_called_once()
+
+
+# -- Auto ID ---------------------------------------------------------------
+
+
+class TestApplyAutoIds:
+    def test_returns_new_list_with_uuid_ids(self):
+        from moss import DocumentInfo
+
+        originals = [
+            DocumentInfo(id="old-1", text="hello"),
+            DocumentInfo(id="old-2", text="world"),
+        ]
+        result = _apply_auto_ids(originals)
+
+        assert len(result) == 2
+        assert result[0].id != "old-1"
+        assert result[1].id != "old-2"
+        # Verify they are valid UUID4 strings
+        uuid.UUID(result[0].id, version=4)
+        uuid.UUID(result[1].id, version=4)
+
+    def test_does_not_mutate_originals(self):
+        from moss import DocumentInfo
+
+        originals = [DocumentInfo(id="keep-me", text="data")]
+        _apply_auto_ids(originals)
+
+        assert originals[0].id == "keep-me"
+
+    def test_preserves_text_and_metadata(self):
+        from moss import DocumentInfo
+
+        originals = [
+            DocumentInfo(
+                id="x",
+                text="some text",
+                metadata={"key": "val"},
+                embedding=[0.1, 0.2],
+            )
+        ]
+        result = _apply_auto_ids(originals)
+
+        assert result[0].text == "some text"
+        assert result[0].metadata == {"key": "val"}
+        assert result[0].embedding == pytest.approx([0.1, 0.2], abs=1e-6)
+
+    def test_generates_unique_ids(self):
+        from moss import DocumentInfo
+
+        originals = [DocumentInfo(id="same", text=f"doc-{i}") for i in range(100)]
+        result = _apply_auto_ids(originals)
+
+        ids = [doc.id for doc in result]
+        assert len(set(ids)) == 100
+
+    def test_empty_list(self):
+        result = _apply_auto_ids([])
+        assert result == []
+
+
+class TestAutoIdIntegration:
+    @pytest.mark.asyncio
+    async def test_create_index_with_auto_id(self, client):
+        mock_result = MagicMock(job_id="j1", index_name="idx", doc_count=1)
+        client._manage.create_index = MagicMock(return_value=mock_result)
+
+        docs = [MagicMock(text="hello", metadata=None, embedding=None)]
+        await client.create_index("idx", docs, auto_id=True)
+
+        call_args = client._manage.create_index.call_args[0]
+        passed_docs = call_args[1]
+        # The doc passed to Rust should have a UUID id, not the original
+        assert passed_docs[0].id != docs[0].id
+        uuid.UUID(passed_docs[0].id, version=4)
+
+    @pytest.mark.asyncio
+    async def test_create_index_auto_id_false_by_default(self, client):
+        mock_result = MagicMock()
+        client._manage.create_index = MagicMock(return_value=mock_result)
+
+        docs = [MagicMock(embedding=None)]
+        await client.create_index("idx", docs)
+
+        call_args = client._manage.create_index.call_args[0]
+        assert call_args[1] is docs  # Same list object, not transformed
+
+    @pytest.mark.asyncio
+    async def test_add_docs_with_auto_id(self, client):
+        mock_result = MagicMock()
+        client._manage.add_docs = MagicMock(return_value=mock_result)
+
+        docs = [MagicMock(text="hello", metadata=None, embedding=None)]
+        await client.add_docs("idx", docs, auto_id=True)
+
+        call_args = client._manage.add_docs.call_args[0]
+        passed_docs = call_args[1]
+        assert passed_docs[0].id != docs[0].id
+        uuid.UUID(passed_docs[0].id, version=4)
+
+    @pytest.mark.asyncio
+    async def test_add_docs_auto_id_false_by_default(self, client):
+        mock_result = MagicMock()
+        client._manage.add_docs = MagicMock(return_value=mock_result)
+
+        docs = [MagicMock()]
+        await client.add_docs("idx", docs)
+
+        call_args = client._manage.add_docs.call_args[0]
+        assert call_args[1] is docs

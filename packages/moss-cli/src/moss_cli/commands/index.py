@@ -32,13 +32,14 @@ def create(
     name: str = typer.Argument(..., help="Index name"),
     file: str = typer.Option(..., "--file", "-f", help="Path to JSON/CSV document file, or '-' for stdin"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Model ID (default: moss-minilm)"),
+    auto_id: bool = typer.Option(False, "--auto-id", help="Auto-generate UUID4 document IDs"),
     wait: bool = typer.Option(False, "--wait", "-w", help="Wait for job to complete"),
     poll_interval: float = typer.Option(2.0, "--poll-interval", help="Seconds between status checks"),
 ) -> None:
     """Create a new index with documents."""
     json_mode = ctx.obj.get("json_output", False)
     client = _client(ctx)
-    docs = load_documents(file)
+    docs = load_documents(file, auto_id=auto_id)
 
     if not json_mode:
         console.print(f"Creating index [cyan]{name}[/cyan] with {len(docs)} document(s)...")
