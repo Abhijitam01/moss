@@ -1,9 +1,3 @@
-#
-# Copyright (c) 2025, InferEdge Inc.
-#
-# SPDX-License-Identifier: BSD 2-Clause License
-#
-
 """Semantic Kernel plugin for Moss semantic search."""
 
 from __future__ import annotations
@@ -18,20 +12,16 @@ from semantic_kernel.functions import kernel_function
 
 __all__ = ["MossPlugin"]
 
-logger = logging.getLogger("semantic_kernel_moss")
+logger = logging.getLogger("moss_semantic_kernel")
 
 
 class MossPlugin:
     """Provides Moss semantic search as a Semantic Kernel plugin.
 
-    This class manages the MossClient lifecycle and exposes a
-    ``@kernel_function``-decorated ``search`` method that Semantic Kernel
-    discovers automatically when the plugin is registered.
-
     Usage::
 
         import semantic_kernel as sk
-        from semantic_kernel_moss import MossPlugin
+        from moss_semantic_kernel import MossPlugin
 
         moss = MossPlugin(
             project_id="...",
@@ -79,11 +69,7 @@ class MossPlugin:
     async def load_index(self) -> None:
         """Pre-load the Moss index for fast queries.
 
-        Call this before registering the plugin with a Kernel so that
-        the first search invocation does not incur index-loading latency.
-
-        This method is safe to call concurrently; only the first call
-        will actually load the index.
+        Safe to call concurrently; only the first call loads the index.
         """
         async with self._load_lock:
             if self._index_loaded:
@@ -101,15 +87,7 @@ class MossPlugin:
         self,
         query: Annotated[str, "The search query to find relevant documents"],
     ) -> str:
-        """Query the Moss index and return formatted results.
-
-        Args:
-            query: The search query text.
-
-        Returns:
-            Formatted string of search results suitable for LLM context,
-            or a short message if no results are found.
-        """
+        """Query the Moss index and return formatted results."""
         if not self._index_loaded:
             raise RuntimeError(
                 f"Index '{self._index_name}' not loaded. Call await load_index() first."

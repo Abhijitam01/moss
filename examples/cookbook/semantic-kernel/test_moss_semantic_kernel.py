@@ -6,7 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from semantic_kernel_moss import MossPlugin
+from moss_semantic_kernel import MossPlugin
+
 
 # ---------------------------------------------------------------------------
 # Helpers
